@@ -61,3 +61,20 @@ ssh dev-48-10 'docker exec src-postgres-1 pg_dump -U kanban kanban' > kanban-备
 MCP 配置按数字员工逐个添加，且提案必须由人在 QoderWake 的同源 Web Console 中确认，CLI 无法代为确认。确认窗口只有 90 秒。
 
 参数：名称 `kanban`，传输 `http`，地址 `http://192.168.48.10:7331/mcp`，请求头 `Authorization: Bearer <该员工的令牌>`。令牌名称必须与员工名称一致。
+
+## MCP 主机白名单（必配）
+
+MCP 端点带 DNS 重绑定保护，默认只放行 localhost。用内网 IP 或外网域名接入时，请求会被拒绝（HTTP 421 Invalid Host header），QoderWake 表现为「工具发现失败」。
+
+在 `.env` 中增加以下变量（JSON 数组），并在 `docker-compose.yml` 的 `app.environment` 中传入 `MCP_ALLOWED_HOSTS` 和 `MCP_ALLOWED_ORIGINS`：
+
+```
+MCP_ALLOWED_HOSTS=["127.0.0.1:*","localhost:*","192.168.48.10:*","14.103.230.165:*"]
+MCP_ALLOWED_ORIGINS=["http://127.0.0.1:*","http://localhost:*","http://192.168.48.10:*","http://14.103.230.165:*"]
+```
+
+新增访问地址时同步追加。MCP 地址请带结尾斜杠：`/mcp/`。
+
+## 首次闭环验证记录（2026-11-20）
+
+数字员工「付泽」通过 QoderWake 接入，领取任务、汇报进度、完成，网页可见全过程，发现 20 个工具。
