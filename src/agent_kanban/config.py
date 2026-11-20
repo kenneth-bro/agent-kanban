@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     session_secret: str = "dev-insecure-secret-change-me"  # override via env in prod
     public_url: str = "http://localhost:7331"
     bootstrap_admin_username: str = "admin"
+    # Reclaim IN_PROGRESS tasks silent for this many minutes (0 disables).
+    claim_timeout_minutes: int = 120
+    claim_sweep_interval_seconds: int = 60
     # MCP transport security — DNS-rebinding protection allow-lists.
     # PUBLIC_URL's hostname is auto-appended if it is non-localhost.
     mcp_allowed_hosts: list[str] = Field(default_factory=lambda: list(_DEFAULT_ALLOWED_HOSTS))

@@ -3,7 +3,7 @@
 Authorization rule (spec §5.3): mutations require task.claimed_by == calling agent.
 We raise PermissionError on violation so callers can map to HTTP 403 / MCP error.
 """
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -17,6 +17,7 @@ from agent_kanban.models import (
     Artifact,
     Comment,
     ProgressEvent,
+    ProgressKind,
     Project,
     Task,
     TaskPriority,
@@ -253,6 +254,41 @@ async def release_task(session: AsyncSession, task_id: int, agent: str) -> Task:
     return task
 
 
+async def reclaim_stale_tasks(session: AsyncSession, timeout_minutes: int) -> list[int]:
+    """Return IN_PROGRESS tasks with no activity for `timeout_minutes` to READY.
+
+    Any progress post, comment-driven status change or claim refreshes
+    `updated_at`, so only tasks whose agent went silent are reclaimed.
+    Returns the ids that were reclaimed (empty when timeout_minutes <= 0).
+    """
+    if timeout_minutes <= 0:
+        return []
+    now = datetime.now(UTC).replace(tzinfo=None)
+    cutoff = now - timedelta(minutes=timeout_minutes)
+    stmt = (
+        update(Task)
+        .where(Task.status == TaskStatus.IN_PROGRESS, Task.updated_at < cutoff)
+        .values(status=TaskStatus.READY, claimed_by=None, claimed_at=None, updated_at=now)
+        .returning(Task.id)
+    )
+    ids = [row[0] for row in (await session.execute(stmt)).all()]
+    for task_id in ids:
+        session.add(
+            ProgressEvent(
+                task_id=task_id,
+                agent="system",
+                kind=ProgressKind.TEXT,
+                payload={"content": f"超过 {timeout_minutes} 分钟无进展，任务已自动回收为就绪状态"},
+            )
+        )
+    await session.commit()
+    for task_id in ids:
+        task = await session.get(Task, task_id)
+        if task is not None:
+            await _publish_task_event("board", "task_released", task)
+    return ids
+
+
 async def cancel_task(session: AsyncSession, task_id: int, agent: str) -> Task:
     """Cancel a claimed task (the MCP mirror of the UI cancel button)."""
     task = await get_task(session, task_id)
@@ -404,7 +440,7 @@ async def _maybe_collect_review_diff(
     )
 
 
-REVIEW_DECISION_MIN = 10
+REVIEW_DECISION_MIN = 2
 
 
 async def request_review(
@@ -425,15 +461,15 @@ async def request_review(
     if not decision or len(decision.strip()) < REVIEW_DECISION_MIN:
         raise ValueError(
             "request_review needs decision: one line naming the decision the "
-            "operator still has to make (for example 'deploy till produktion på "
-            "hedburgaren'). Verified work that waits for no decision is closed "
+            "operator still has to make (for example 'approve deploying to "
+            "production'). Verified work that waits for no decision is closed "
             "with complete_task."
         )
     task = await get_task(session, task_id)
     _check_claimer(task, agent)
     task.status = TaskStatus.REVIEW
     task.updated_at = datetime.now(UTC).replace(tzinfo=None)
-    content = f"Väntar på beslut: {decision.strip()}"
+    content = f"等待决策：{decision.strip()}"
     if summary:
         content += f"\n\n{summary}"
     session.add(

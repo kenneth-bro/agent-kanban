@@ -6,12 +6,13 @@
  * A subscribe/store layer in i18n.tsx wires this into React.
  */
 
-export type Locale = "ru" | "en" | "sv";
+export type Locale = "ru" | "en" | "sv" | "zh";
 
 export const LANGS: { code: Locale; label: string }[] = [
   { code: "ru", label: "RU" },
   { code: "en", label: "EN" },
   { code: "sv", label: "SV" },
+  { code: "zh", label: "中文" },
 ];
 
 // ── Message catalogs ────────────────────────────────────────────────────────
@@ -611,7 +612,186 @@ const sv: Catalog = {
   "admin.error.adminFlag": "Kunde inte ändra administratörsrättigheterna",
 };
 
-const CATALOGS: Record<Locale, Catalog> = { en, ru, sv };
+const zh: Catalog = {
+  "common.loading": "加载中…",
+  "common.backToBoard": "← 返回看板",
+  "common.cancel": "取消",
+  "common.send": "发送",
+  "common.add": "添加",
+  "common.edit": "编辑",
+  "common.close": "关闭",
+  "common.dismiss": "忽略",
+  "common.copy": "复制",
+  "common.copied": "已复制",
+  "common.never": "从未",
+  "common.empty": "空",
+
+  "nav.admin": "管理",
+  "nav.logout": "退出登录",
+  "nav.theme.toLight": "切换为浅色",
+  "nav.theme.toDark": "切换为深色",
+  "nav.theme.toggle": "切换主题",
+
+  "login.eyebrow.setup": "首次运行",
+  "login.eyebrow.login": "登录",
+  "login.brand": "Agent Kanban",
+  "login.subtitle.setup": "请先创建管理员账号。",
+  "login.subtitle.login": "面向拉取式智能体的任务看板控制台。",
+  "login.usernameLabel": "用户名",
+  "login.passwordLabel": "密码",
+  "login.confirmLabel": "确认密码",
+  "login.usernamePlaceholder": "用户名",
+  "login.error.shortPassword": "密码至少 8 位",
+  "login.error.mismatch": "两次输入的密码不一致",
+  "login.error.failed": "登录失败",
+  "login.button.setup": "创建管理员",
+  "login.button.login": "登录",
+
+  "board.eyebrow": "看板",
+  "board.title": "全部任务",
+  "board.newTask": "+ 新建任务",
+  "board.tip": "拖动卡片切换列。拖入 {ready} 后，智能体即可通过 MCP 领取。",
+  "board.tipReady": "就绪",
+  "board.allProjects": "全部项目",
+  "board.projectFilterTooltip": "只显示某个项目的任务",
+
+  "column.empty": "空",
+
+  "status.todo": "待办",
+  "status.ready": "就绪",
+  "status.in_progress": "进行中",
+  "status.review": "待评审",
+  "status.done": "已完成",
+  "status.blocked": "阻塞",
+  "status.cancelled": "已取消",
+
+  "task.live": "实时",
+  "task.reservedTooltip": "已指定给 {agent}",
+  "task.claimedBy": "由 {name} 领取",
+  "task.createdTooltip": "创建于 {date}",
+  "task.preferredTooltip": "优先智能体：{agent}",
+  "task.pr": "PR #{num}",
+  "task.prFallback": "pr",
+
+  "pr.merged": "已合并",
+  "pr.closed": "已关闭",
+  "pr.open": "进行中",
+
+  "priority.critical": "紧急",
+  "priority.high": "高",
+  "priority.medium": "中",
+  "priority.low": "低",
+
+  "card.back": "← 返回看板",
+  "card.taskPrefix": "任务 #{id}",
+  "card.reservedTooltip": "已指定给该智能体",
+  "card.section.progress": "进度",
+  "card.section.details": "详情",
+  "card.noDescription": "暂无描述",
+  "card.created": "创建时间",
+  "card.createdBy": "创建人 {name}",
+  "card.assignedTo": "指定给",
+  "card.assignAnyone": "不指定（任何人）",
+  "card.assignTooltip": "把任务保留给某个智能体，其他智能体看不到也领不了。",
+  "card.priority": "优先级",
+  "card.preferredModel": "优先模型",
+  "card.preferredNone": "无偏好",
+  "card.preferredTooltip": "软提示：该智能体在 get_next_task 中优先看到此任务，其他智能体仍可领取。",
+  "card.project": "所属项目",
+  "card.projectNone": "无项目",
+  "card.reopenReady": "重新打开 → 就绪",
+  "card.cancel": "取消任务",
+  "card.error.assign": "指定任务失败",
+  "card.error.update": "更新任务失败",
+
+  "comment.heading": "评论",
+  "comment.empty": "暂无评论。",
+  "comment.seen": "已读",
+  "comment.pending": "待读",
+  "comment.inputPlaceholder": "给智能体留言…",
+  "comment.statusAfter": "发送后的状态",
+  "comment.toInProgress": "→ 进行中",
+  "comment.toReady": "→ 就绪",
+  "comment.sending": "发送中…",
+  "comment.error": "发送评论失败",
+
+  "newTask.eyebrow": "新任务",
+  "newTask.title": "创建任务",
+  "newTask.titleLabel": "标题",
+  "newTask.titlePlaceholder": "需要完成什么？",
+  "newTask.descLabel": "描述",
+  "newTask.descPlaceholder": "支持 Markdown",
+  "newTask.tagsLabel": "标签",
+  "newTask.tagsPlaceholder": "用逗号分隔",
+  "newTask.projectLabel": "项目（可选）",
+  "newTask.projectNone": "无项目",
+  "newTask.priorityLabel": "优先级",
+  "newTask.preferredLabel": "优先模型（可选）",
+  "newTask.preferredNone": "无偏好",
+  "newTask.preferredTooltip": "软提示：该智能体优先看到此任务，其他智能体仍可领取。",
+  "newTask.repoLabel": "仓库路径（可选）",
+  "newTask.baseLabel": "基础分支（可选）",
+  "newTask.assignLabel": "指定给（可选）",
+  "newTask.assignTooltip": "把任务保留给某个智能体，其他智能体看不到。",
+  "newTask.assignAnyone": "不指定（任何人）",
+  "newTask.creating": "创建中…",
+  "newTask.create": "创建任务",
+  "newTask.error": "创建任务失败",
+
+  "progress.collapseAll": "收起全部 diff",
+  "progress.expandAll": "展开全部 diff",
+  "progress.diff": "diff",
+  "progress.hunks": "{count} 个改动块",
+
+  "admin.eyebrow": "管理",
+  "admin.title": "令牌与用户",
+  "admin.tokensHeading": "令牌（智能体）",
+  "admin.projectsHeading": "项目",
+  "admin.usersHeading": "用户",
+  "admin.projectNamePlaceholder": "项目名称",
+  "admin.projectRepoPlaceholder": "仓库路径（可选）",
+  "admin.projectBranchPlaceholder": "默认分支（可选）",
+  "admin.col.projectName": "项目",
+  "admin.col.projectRepo": "仓库路径",
+  "admin.col.projectBranch": "默认分支",
+  "admin.noProjects": "暂无项目。",
+  "admin.error.addProject": "添加项目失败",
+  "admin.error.updateProject": "更新项目失败",
+  "admin.banner": "请立即复制，仅显示一次",
+  "admin.agentPlaceholder": "agent_name（如 codex）",
+  "admin.descPlaceholder": "说明（可选）",
+  "admin.mint": "生成令牌",
+  "admin.col.agent": "智能体",
+  "admin.col.description": "说明",
+  "admin.col.created": "创建时间",
+  "admin.col.lastUsed": "最近使用",
+  "admin.col.role": "角色",
+  "admin.col.username": "用户名",
+  "admin.noTokens": "暂无令牌。",
+  "admin.revoke": "吊销",
+  "admin.userPlaceholder": "用户名",
+  "admin.passPlaceholder": "密码",
+  "admin.admin": "管理员",
+  "admin.role.admin": "管理员",
+  "admin.role.user": "普通用户",
+  "admin.changePassBody":
+    "修改密码：请输入{your}当前管理员密码，以及 {name} 的新密码（8 位以上）。",
+  "admin.changePassYour": "你的",
+  "admin.yourCurrentPass": "你的当前密码",
+  "admin.newPassFor": "{name} 的新密码",
+  "admin.changePassword": "修改密码",
+  "admin.promote": "设为管理员",
+  "admin.demote": "取消管理员",
+  "admin.deleteUser": "删除用户",
+  "admin.error.mint": "生成令牌失败",
+  "admin.error.revoke": "吊销令牌失败",
+  "admin.error.addUser": "添加用户失败",
+  "admin.error.removeUser": "删除用户失败",
+  "admin.error.changePass": "修改密码失败",
+  "admin.error.adminFlag": "更新管理员标记失败",
+};
+
+const CATALOGS: Record<Locale, Catalog> = { en, ru, sv, zh };
 
 // ── Store ───────────────────────────────────────────────────────────────────
 
@@ -624,7 +804,7 @@ const _listeners = new Set<(l: Locale) => void>();
 export function getInitialLocale(): Locale {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "ru" || saved === "en" || saved === "sv") return saved;
+    if (saved === "ru" || saved === "en" || saved === "sv" || saved === "zh") return saved;
   } catch {
     /* localStorage unavailable */
   }
@@ -632,6 +812,7 @@ export function getInitialLocale(): Locale {
     const lang = navigator.language?.toLowerCase() ?? "";
     if (lang.startsWith("ru")) return "ru";
     if (lang.startsWith("sv")) return "sv";
+    if (lang.startsWith("zh")) return "zh";
   }
   return "en";
 }
@@ -698,5 +879,6 @@ export function tCount(key: string, count: number): string {
 export function localeBcp47(locale: Locale = _locale): string {
   if (locale === "ru") return "ru-RU";
   if (locale === "sv") return "sv-SE";
+  if (locale === "zh") return "zh-CN";
   return "en-US";
 }

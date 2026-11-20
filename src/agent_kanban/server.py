@@ -1,5 +1,7 @@
 """FastAPI app factory."""
+import asyncio
 import contextlib
+import logging
 import os
 
 from fastapi import FastAPI
@@ -13,8 +15,10 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 
 from agent_kanban.config import get_settings
+from agent_kanban.db import AsyncSessionLocal
 from agent_kanban.mcp_server import MCPAuthMiddleware, create_mcp
 from agent_kanban.ratelimit import limiter
+from agent_kanban.services import reclaim_stale_tasks
 from agent_kanban.routes import artifacts, auth as auth_routes, comments, progress, projects, tasks, ws
 
 
@@ -70,6 +74,9 @@ async def _bootstrap_admin() -> None:
         await session.commit()
 
 
+logger = logging.getLogger(__name__)
+
+
 def create_app() -> FastAPI:
     """Build a configured FastAPI app with the MCP server mounted at /mcp.
 
@@ -83,6 +90,21 @@ def create_app() -> FastAPI:
     # Calling streamable_http_app() initializes the lazy session_manager that
     # the lifespan below runs for the app's lifetime.
     mcp_http_app = mcp_instance.streamable_http_app()
+
+    async def _reclaim_loop() -> None:
+        """Periodically return silent IN_PROGRESS tasks to READY."""
+        settings = get_settings()
+        if settings.claim_timeout_minutes <= 0:
+            return
+        while True:
+            await asyncio.sleep(settings.claim_sweep_interval_seconds)
+            try:
+                async with AsyncSessionLocal() as s:
+                    ids = await reclaim_stale_tasks(s, settings.claim_timeout_minutes)
+                if ids:
+                    logger.info("领取超时回收：任务 %s 已回到就绪状态", ids)
+            except Exception:
+                logger.exception("领取超时回收失败")
 
     @contextlib.asynccontextmanager
     async def _lifespan(app: FastAPI):
@@ -104,8 +126,12 @@ def create_app() -> FastAPI:
         # Bootstrap the admin user BEFORE starting the MCP session manager so
         # the admin exists before any authenticated request can be served.
         await _bootstrap_admin()
-        async with mcp_instance.session_manager.run():
-            yield
+        sweeper = asyncio.create_task(_reclaim_loop())
+        try:
+            async with mcp_instance.session_manager.run():
+                yield
+        finally:
+            sweeper.cancel()
 
     app = FastAPI(title="Agent Kanban", version="0.1.0", lifespan=_lifespan)
     # Rate limiting (slowapi). Registered before routers so the SlowAPIMiddleware

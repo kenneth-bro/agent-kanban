@@ -141,7 +141,7 @@ function Shell({
                   padding: "4px 9px",
                   minWidth: 36,
                 }}
-                title={l.code === "ru" ? "Русский" : l.code === "sv" ? "Svenska" : "English"}
+                title={l.code === "ru" ? "Русский" : l.code === "sv" ? "Svenska" : l.code === "zh" ? "中文" : "English"}
               >
                 {l.label}
               </button>

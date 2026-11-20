@@ -107,7 +107,7 @@ async def test_request_review_requires_a_decision(session: AsyncSession):
     """Review means waiting for the operator's decision; without one it is refused."""
     t = await create_task(session, TaskCreate(title="t", status=TaskStatus.READY))
     await claim_task(session, t.id, "codex")
-    for decision in (None, "", "   ", "ok"):
+    for decision in (None, "", "   ", "x"):
         with pytest.raises(ValueError, match="complete_task"):
             await request_review(session, t.id, "codex", summary="klart", decision=decision)
     t2 = await get_task(session, t.id)
@@ -121,7 +121,7 @@ async def test_request_review_records_the_decision(session: AsyncSession):
     await request_review(session, t.id, "codex", summary="tester gröna", decision="deploy till produktion")
     events = await list_progress_events(session, t.id)
     texts = [e.payload.get("content", "") for e in events]
-    assert any(x.startswith("Väntar på beslut: deploy till produktion") for x in texts)
+    assert any(x.startswith("等待决策：deploy till produktion") for x in texts)
 
 
 @pytest.mark.asyncio
@@ -400,3 +400,35 @@ async def test_post_progress_artifact_ref_without_matching_row(session: AsyncSes
     )
     assert "id" not in ev.payload["artifact"]
     assert ev.payload["artifact"]["path"] == "/nonexistent/file"
+
+
+@pytest.mark.asyncio
+async def test_request_review_accepts_short_chinese_decision(session: AsyncSession):
+    t = await create_task(session, TaskCreate(title="t", status=TaskStatus.READY))
+    await claim_task(session, t.id, "codex")
+    out = await request_review(session, t.id, "codex", decision="是否验收")
+    assert out.status == TaskStatus.REVIEW
+
+
+@pytest.mark.asyncio
+async def test_reclaim_stale_tasks_returns_silent_task_to_ready(session: AsyncSession):
+    from datetime import UTC, datetime, timedelta
+
+    from agent_kanban.services import reclaim_stale_tasks
+
+    stale = await create_task(session, TaskCreate(title="stale", status=TaskStatus.READY))
+    fresh = await create_task(session, TaskCreate(title="fresh", status=TaskStatus.READY))
+    await claim_task(session, stale.id, "codex")
+    await claim_task(session, fresh.id, "codex")
+    row = await get_task(session, stale.id)
+    row.updated_at = datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=500)
+    await session.commit()
+
+    assert await reclaim_stale_tasks(session, 0) == []
+    ids = await reclaim_stale_tasks(session, 120)
+    assert ids == [stale.id]
+    assert (await get_task(session, stale.id)).status == TaskStatus.READY
+    assert (await get_task(session, stale.id)).claimed_by is None
+    assert (await get_task(session, fresh.id)).status == TaskStatus.IN_PROGRESS
+    # a reclaimed task can be claimed by someone else
+    assert (await claim_task(session, stale.id, "other")).ok
