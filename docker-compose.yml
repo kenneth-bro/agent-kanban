@@ -28,6 +28,10 @@ services:
       SESSION_SECRET: '${SESSION_SECRET:?SESSION_SECRET is required — generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"}'
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:7331}
       AGENT_KANBAN_BOOTSTRAP_ADMIN_PASSWORD: ${AGENT_KANBAN_BOOTSTRAP_ADMIN_PASSWORD:-}
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-["127.0.0.1:*","localhost:*"]}
+      MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:-["http://127.0.0.1:*","http://localhost:*"]}
+      CLAIM_TIMEOUT_MINUTES: ${CLAIM_TIMEOUT_MINUTES:-120}
+      CLAIM_SWEEP_INTERVAL_SECONDS: ${CLAIM_SWEEP_INTERVAL_SECONDS:-60}
     ports:
       - "${KANBAN_BIND_IP:-127.0.0.1}:7331:7331"
 
