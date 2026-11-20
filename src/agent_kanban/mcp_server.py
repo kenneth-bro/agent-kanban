@@ -336,6 +336,8 @@ def create_mcp() -> FastMCP:
         preferred_model: Optional[str] = None,
         repo_path: Optional[str] = None,
         base_branch: Optional[str] = None,
+        assigned_to: Optional[str] = None,
+        ready: bool = False,
     ) -> dict:
         """Create a task. Any authenticated agent may file one (e.g. a bug found
         while working). The task is recorded with created_by = the calling agent
@@ -343,8 +345,19 @@ def create_mcp() -> FastMCP:
 
         priority: "critical" | "high" | "medium" | "low" (default "medium")
         preferred_model: soft hint, e.g. the agent that should ideally take it.
+        assigned_to: reserve the task for one digital employee (token name).
+        ready: create directly as "ready" (skips the human release step). Only
+        agents listed in MCP_READY_CREATORS may set it; others get an error.
         """
         await _require_matching_agent(agent)
+        if ready:
+            allowed = {
+                n.strip() for n in get_settings().mcp_ready_creators.split(",") if n.strip()
+            }
+            if agent not in allowed:
+                raise PermissionError(
+                    f"{agent!r} is not allowed to create ready tasks (MCP_READY_CREATORS)"
+                )
         async with session() as s:
             task = await svc_create_task(
                 s,
@@ -357,6 +370,8 @@ def create_mcp() -> FastMCP:
                     preferred_model=preferred_model,
                     repo_path=repo_path,
                     base_branch=base_branch,
+                    assigned_to=assigned_to,
+                    status=TaskStatus.READY if ready else TaskStatus.TODO,
                     created_by=agent,
                 ),
             )

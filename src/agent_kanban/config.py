@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     # Reclaim IN_PROGRESS tasks silent for this many minutes (0 disables).
     claim_timeout_minutes: int = 120
     claim_sweep_interval_seconds: int = 60
+    # Comma-separated agent (token) names allowed to create tasks directly as
+    # READY via MCP create_task(ready=true). Empty = only humans release tasks.
+    mcp_ready_creators: str = ""
     # MCP transport security — DNS-rebinding protection allow-lists.
     # PUBLIC_URL's hostname is auto-appended if it is non-localhost.
     mcp_allowed_hosts: list[str] = Field(default_factory=lambda: list(_DEFAULT_ALLOWED_HOSTS))

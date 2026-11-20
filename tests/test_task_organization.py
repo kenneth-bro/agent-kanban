@@ -181,6 +181,23 @@ async def test_mcp_create_task_rejects_wrong_agent(session):
         )
 
 
+async def test_mcp_create_task_ready_requires_allowlist(session, monkeypatch):
+    with pytest.raises(Exception):
+        await mcp.call_tool(
+            "create_task", {"agent": "codex", "title": "x", "ready": True}
+        )
+    from agent_kanban.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "mcp_ready_creators", "codex, 付泽")
+    result = await mcp.call_tool(
+        "create_task",
+        {"agent": "codex", "title": "dispatch", "ready": True, "assigned_to": "付泽"},
+    )
+    task = _to_dict(result)
+    assert task["status"] == "ready"
+    assert task["assigned_to"] == "付泽"
+
+
 async def test_mcp_update_task_claimer_can_edit(session):
     task = await create_task(session, TaskCreate(title="t"))
     task.status = TaskStatus.IN_PROGRESS
