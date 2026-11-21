@@ -6,6 +6,7 @@ import { Board } from "./pages/Board";
 import { CardDetail } from "./pages/CardDetail";
 import { getStoredTheme, setTheme, toggleTheme, type Theme } from "./theme";
 import { LANGS, useT } from "./i18n.tsx";
+import { t as tStatic } from "./i18n.ts";
 
 type View =
   | { name: "loading" }
@@ -46,7 +47,7 @@ export default function App() {
   if (view.name === "loading") {
     return (
       <div style={{ padding: 40, color: "var(--text-mute)", textAlign: "center" }}>
-        Loading…
+        {tStatic("common.loading")}
       </div>
     );
   }
@@ -112,7 +113,7 @@ function Shell({
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Monogram />
-          <span style={{ fontWeight: 600, letterSpacing: "-0.01em" }}>Agent Kanban</span>
+          <span style={{ fontWeight: 600, letterSpacing: "-0.01em" }}>{t("login.brand")}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {/* Language toggle — RU | EN */}

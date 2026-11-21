@@ -634,7 +634,7 @@ const zh: Catalog = {
 
   "login.eyebrow.setup": "首次运行",
   "login.eyebrow.login": "登录",
-  "login.brand": "Agent Kanban",
+  "login.brand": "AI 任务看板",
   "login.subtitle.setup": "请先创建管理员账号。",
   "login.subtitle.login": "面向拉取式智能体的任务看板控制台。",
   "login.usernameLabel": "用户名",
@@ -800,7 +800,7 @@ const STORAGE_KEY = "kanban-locale";
 let _locale: Locale = getInitialLocale();
 const _listeners = new Set<(l: Locale) => void>();
 
-/** Resolve the initial locale: saved pref → browser language → en. */
+/** Resolve the initial locale: saved pref → zh (default). */
 export function getInitialLocale(): Locale {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -808,13 +808,7 @@ export function getInitialLocale(): Locale {
   } catch {
     /* localStorage unavailable */
   }
-  if (typeof navigator !== "undefined") {
-    const lang = navigator.language?.toLowerCase() ?? "";
-    if (lang.startsWith("ru")) return "ru";
-    if (lang.startsWith("sv")) return "sv";
-    if (lang.startsWith("zh")) return "zh";
-  }
-  return "en";
+  return "zh";
 }
 
 export function getLocale(): Locale {
